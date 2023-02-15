@@ -1,3 +1,5 @@
 .idea/
 .DS_Store
 venv/
+.pytest_cache
+builder/ecr_deploy.sh
