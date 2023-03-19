@@ -3,9 +3,11 @@ import logging
 import os
 import shutil
 import subprocess
+from logging import StreamHandler
 
 logger = logging.getLogger('hugo-builder')
 logging.getLogger().setLevel(getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
+logger.addHandler(StreamHandler())
 
 
 def load_branch_map_config(repo_dir):
