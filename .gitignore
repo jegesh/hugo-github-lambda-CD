@@ -3,3 +3,5 @@
 venv/
 builder/event_body.json
 builder/sample_event.json
+.pytest_cache
+builder/ecr_deploy.sh

@@ -3,11 +3,10 @@ import logging
 import os
 import shutil
 import subprocess
-from logging import StreamHandler
 
 logger = logging.getLogger('hugo-builder')
 logging.getLogger().setLevel(getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
-logger.addHandler(StreamHandler())
+logger.addHandler(logging.StreamHandler())
 
 
 def load_branch_map_config(repo_dir):
@@ -26,6 +25,7 @@ def get_config_param(branch_name, param_name, branch_map):
 
 
 def handler(event, context):
+    logger.debug(event)
     headers = event['headers']
     if 'x-github-event' not in headers or headers['x-github-event'] != 'push':
         return {"statusCode": 401}
@@ -53,7 +53,7 @@ def handler(event, context):
     git_username = os.environ['GITHUB_USERNAME']
     logger.info("Start clone of git repo")
     subprocess.run(
-        f'git clone --depth=1 --shallow-submodules --branch {branch_name} https://{git_username}:{access_token}@github.com/{repo_name}.git',
+        f'git clone --recurse-submodules --depth=1 --shallow-submodules --branch {branch_name} https://{git_username}:{access_token}@github.com/{repo_name}.git',
         shell=True).check_returncode()
 
     logger.info('Start Hugo build process')
@@ -63,7 +63,8 @@ def handler(event, context):
 
     logger.info("Uploading generated web files to s3 bucket")
     bucket_name = os.environ['S3_BUCKET']
-    subprocess.run(f'aws s3 cp --recursive --quiet {repo_dir}/public/ s3://{bucket_name}/')
+    subprocess.run(f'aws s3 cp --recursive --quiet ./{repo_dir}/public/ s3://{bucket_name}/',
+                   shell=True).check_returncode()
 
     # remove files to prevent storage buildup
     shutil.rmtree(repo_dir)
